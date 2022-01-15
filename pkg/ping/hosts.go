@@ -43,6 +43,10 @@ func PingHosts(
 	for i, host := range hosts {
 		i, host := i, host
 
+		if i == 0 && onProgress != nil {
+			onProgress(0)
+		}
+
 		go func(t config.HostPingConfig, i int, curr *int, currLock *sync.Mutex, total int) {
 			if err := sem.Acquire(ctx, 1); err != nil {
 				done <- err

@@ -14,6 +14,8 @@ const (
 
 func EnumerateLocalHosts(
 	exclude *regexp.Regexp,
+	ipv6 bool,
+	ipv4 bool,
 ) ([]config.HostPingConfig, error) {
 	// Get the IPv6 multicast address
 	multicastDst, err := net.ResolveIPAddr("ip", ipv6MulticastIP)
@@ -45,7 +47,7 @@ func EnumerateLocalHosts(
 			if !(ip.IsLoopback() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast()) {
 				newTargets := []config.HostPingConfig{}
 
-				if ip.To4() == nil && ip.To16() != nil {
+				if ip.To4() == nil && ip.To16() != nil && ipv6 {
 					// Add the IPv6 multicast address
 					newTargets = append(
 						newTargets,
@@ -55,7 +57,7 @@ func EnumerateLocalHosts(
 							Dst: multicastDst,
 						},
 					)
-				} else if ip.To4() != nil {
+				} else if ip.To4() != nil && ipv4 {
 					// Calculate and add the pingable IPv4 addresses
 					// See https://stackoverflow.com/a/60542265
 					mask := binary.BigEndian.Uint32(network.Mask)
