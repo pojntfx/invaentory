@@ -83,7 +83,7 @@ fe80::b2a8:6eff:fe0c:ed1a%enp0s13f0u1u2u2
 2001:7c7:2121:8d00:d125:4d82:b9f7:5a00
 ```
 
-The progress bar and logging output is written to `STDERR`, so you can further process just the IP addresses as usual, for example to scan all the IPv6 nodes using `IPv6`:
+The progress bar and logging output is written to `STDERR`, so you can further process just the IP addresses as usual, for example to scan all the IPv6 nodes using `nmap`:
 
 ```shell
 $ for host in $(invaentory -4=false); do nmap -6 ${host}; done
