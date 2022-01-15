@@ -2,10 +2,8 @@ package ping
 
 import (
 	"context"
-	"math"
 	"net"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/digineo/go-ping"
@@ -24,7 +22,6 @@ func PingHosts(
 
 	onStartPing func(ip string),
 	onSuccessfulPing func(ip string),
-	onProgress func(percentage float64),
 ) error {
 	// As we can't have a semaphore with a zero weight, return
 	if len(hosts) == 0 {
@@ -35,44 +32,20 @@ func PingHosts(
 	sem := semaphore.NewWeighted(parallel)
 	done := make(chan error)
 
-	// Take note of the current progress
-	curr := 0
-	var currLock sync.Mutex
-	total := len(hosts)
-
 	for i, host := range hosts {
 		i, host := i, host
 
-		if i == 0 && onProgress != nil {
-			onProgress(0)
-		}
-
-		go func(t config.HostPingConfig, i int, curr *int, currLock *sync.Mutex, total int) {
+		go func(t config.HostPingConfig, i int, hosts []config.HostPingConfig) {
 			if err := sem.Acquire(ctx, 1); err != nil {
 				done <- err
 
 				return
 			}
 			defer func() {
-				// Call the `onProgress` callback if progress has incremented
-				if onProgress != nil {
-					currLock.Lock()
-
-					oldCurr := math.Floor(((float64(*curr) / float64(total)) * 100))
-					*curr++
-					newCurr := math.Floor(((float64(*curr) / float64(total)) * 100))
-
-					if newCurr > oldCurr {
-						onProgress(newCurr)
-					}
-
-					currLock.Unlock()
-				}
-
 				sem.Release(1)
 
 				// Done
-				if i >= total-1 {
+				if i >= len(hosts)-1 {
 					done <- nil
 				}
 			}()
@@ -132,7 +105,7 @@ func PingHosts(
 					onSuccessfulPing(addr)
 				}
 			}
-		}(host, i, &curr, &currLock, total)
+		}(host, i, hosts)
 	}
 
 	return <-done

@@ -5,11 +5,13 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"regexp"
 	"time"
 
 	"github.com/pojntfx/invaentory/pkg/enumerate"
 	"github.com/pojntfx/invaentory/pkg/ping"
+	"github.com/schollz/progressbar/v3"
 )
 
 func main() {
@@ -21,7 +23,7 @@ func main() {
 	ipv4 := flag.Bool("4", true, "Ping using ICMPv4")
 	exclude := flag.String("exclude", "", "Regex of addresses to exclude")
 
-	progress := flag.Bool("progress", true, "Log progress to STDERR")
+	progress := flag.Bool("progress", true, "Show progress bar on STDERR")
 	verbose := flag.Bool("verbose", false, "Enable verbose logging to STDERR")
 
 	flag.Parse()
@@ -36,6 +38,29 @@ func main() {
 		panic(err)
 	}
 
+	var bar *progressbar.ProgressBar
+	if *progress {
+		bar = progressbar.NewOptions(
+			len(hosts),
+			progressbar.OptionSetDescription("Pinging"),
+			progressbar.OptionSetItsString("host"),
+			progressbar.OptionSetWriter(os.Stderr),
+			progressbar.OptionThrottle(100*time.Millisecond),
+			progressbar.OptionShowCount(),
+			progressbar.OptionShowIts(),
+			progressbar.OptionFullWidth(),
+			// VT-100 compatibility
+			progressbar.OptionUseANSICodes(true),
+			progressbar.OptionSetTheme(progressbar.Theme{
+				Saucer:        "=",
+				SaucerHead:    ">",
+				SaucerPadding: " ",
+				BarStart:      "[",
+				BarEnd:        "]",
+			}),
+		)
+	}
+
 	if err := ping.PingHosts(
 		context.Background(),
 
@@ -46,19 +71,36 @@ func main() {
 		time.Duration(*unicastTimeout)*time.Millisecond,
 
 		func(ip string) {
+			if bar != nil {
+				if err := bar.Add(1); err != nil {
+					panic(err)
+				}
+			}
+
 			if *verbose {
+				if bar != nil {
+					if err := bar.Clear(); err != nil {
+						panic(err)
+					}
+				}
+
 				log.Println("Starting to ping host", ip)
 			}
 		},
 		func(ip string) {
-			fmt.Println(ip)
-		},
-		func(percentage float64) {
-			if *progress {
-				log.Printf("%v%%", percentage)
+			if bar != nil {
+				if err := bar.Clear(); err != nil {
+					panic(err)
+				}
 			}
+
+			fmt.Println(ip)
 		},
 	); err != nil {
 		panic(err)
+	}
+
+	if bar != nil {
+		bar.Clear()
 	}
 }
