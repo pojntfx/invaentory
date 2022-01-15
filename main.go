@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"regexp"
-	"runtime"
 	"time"
 
 	"github.com/pojntfx/invaentory/pkg/enumerate"
@@ -14,13 +13,15 @@ import (
 )
 
 func main() {
-	parallel := flag.Int("parallel", runtime.NumCPU(), "Amount of pings to run in parallel")
+	parallel := flag.Int("parallel", 100, "Amount of pings to run in parallel")
 	multicastTimeout := flag.Int("multicast-timeout", 2000, "Time in milliseconds to wait for responses for multicast (IPv6) pings")
 	unicastTimeout := flag.Int("unicast-timeout", 500, "Time in milliseconds to wait for responses for unicast (IPv4) pings")
 
+	ipv6 := flag.Bool("6", true, "Ping using ICMPv6")
+	ipv4 := flag.Bool("4", true, "Ping using ICMPv4")
 	exclude := flag.String("exclude", "", "Regex of addresses to exclude")
 
-	progress := flag.Bool("progress", false, "Log progress to STDERR")
+	progress := flag.Bool("progress", true, "Log progress to STDERR")
 	verbose := flag.Bool("verbose", false, "Enable verbose logging to STDERR")
 
 	flag.Parse()
@@ -30,7 +31,7 @@ func main() {
 		filter = regexp.MustCompile(*exclude)
 	}
 
-	hosts, err := enumerate.EnumerateLocalHosts(filter)
+	hosts, err := enumerate.EnumerateLocalHosts(filter, *ipv6, *ipv4)
 	if err != nil {
 		panic(err)
 	}
