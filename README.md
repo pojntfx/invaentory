@@ -138,7 +138,6 @@ Usage of invaentory:
 ## Acknowledgements
 
 - This project would not have been possible were it not for [@digineo](https://github.com/digineo)'s [go-ping](https://github.com/digineo/go-ping) package; be sure to check it out too!
-- All the rest of the authors who worked on the dependencies used! Thanks a lot!
 
 ## Contributing
 
@@ -159,6 +158,6 @@ Have any questions or need help? Chat with us [on Matrix](https://matrix.to/#/#i
 
 ## License
 
-invaentory (c) 2022 Felicitas Pojtinger and contributors
+invaentory (c) 2023 Felicitas Pojtinger and contributors
 
 SPDX-License-Identifier: AGPL-3.0

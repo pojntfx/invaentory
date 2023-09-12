@@ -45,4 +45,4 @@ clean:
 
 # Dependencies
 depend:
-	exit 0
+	true
